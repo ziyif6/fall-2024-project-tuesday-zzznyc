@@ -30,7 +30,7 @@ public class PlayerMovement : MonoBehaviour
     Vector2 playerpos;
     Vector2 reticlepos;
     Vector2 direction;
-    [SerializeField] float speed = 10f;
+    [SerializeField] float speed = 1f;
     [SerializeField] float regGrav = 1.0f;
     [SerializeField] float wallGrav = 0.5f;
     [SerializeField] int numJumps = 5;
@@ -39,8 +39,11 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] Transform wallCheck;
     [SerializeField] LayerMask wallLayer;
 
-    [SerializeField] float minReticleDistance = 1f; 
-    [SerializeField] float maxReticleDistance = 5f;  
+    [SerializeField] float minReticleDistance = 6.0f;  // 初始距离
+    [SerializeField] float maxReticleDistance = 10.0f;  // 最大距离
+    [SerializeField] float reticleSpeed = 0.8f;        // 调整准星的速度
+    private bool increasingDistance = true;          // 标志位：控制距离是否在增加
+    private float currentReticleDistance; 
 
     int currentJumps;
     
@@ -54,6 +57,7 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         currentJumps = numJumps;
+        currentReticleDistance = minReticleDistance;
         UpdateStepsText();
     }
 
@@ -63,30 +67,53 @@ public class PlayerMovement : MonoBehaviour
         playerpos = (Vector2)transform.position;
         reticlepos = (Vector2)reticle.transform.position;
         direction = reticlepos - playerpos;
-
+    
         if (currentJumps <= 0)
         {
             RestartGame();
         }
-        if (Input.GetKey("space"))
+        if (Input.GetKey("space") && IsGrounded())
         {
-            // 根据按住时间来调整跳跃力度
-            float holdTime = Mathf.Clamp(Time.time, 0, 1.0f);  // 模拟跳跃力度增加
-
-            // 根据跳跃力度调整准星距离（这里可以根据实际的需求进行微调）
-            float distance = Mathf.Lerp(minReticleDistance, maxReticleDistance, holdTime);
-
-            // 计算新的准星位置并更新
-            reticle.transform.position = (Vector2)transform.position + direction.normalized * distance;
+            if (increasingDistance)
+            {   
+                currentReticleDistance += reticleSpeed * Time.deltaTime;
+                if (currentReticleDistance >= maxReticleDistance / 2.2f)
+                {
+                    increasingDistance = false;
+                }
+            }
+            else
+            {
+                currentReticleDistance -= reticleSpeed * Time.deltaTime;
+                if (currentReticleDistance <= minReticleDistance)
+                {
+                    increasingDistance = true;
+                }
+            }
+            reticle.transform.position = (Vector2)transform.position + direction.normalized * currentReticleDistance;
         }
 
-        if (Input.GetKeyDown("space") && (IsGrounded()))
+        if (Input.GetKeyUp("space"))
         {
+            // 获取当前玩家和准星的方向
             playerpos = (Vector2)transform.position;
             reticlepos = (Vector2)reticle.transform.position;
             direction = reticlepos - playerpos;
-            rb.AddForce(direction.normalized * speed);
+            float jumpForce = currentReticleDistance * speed;
+            rb.AddForce(direction.normalized * jumpForce / 60.0f, ForceMode2D.Impulse);
+            currentReticleDistance = minReticleDistance;
+             reticle.transform.position = (Vector2)transform.position + direction.normalized * currentReticleDistance;
+            increasingDistance = true;
         }
+
+        // if (Input.GetKeyDown("space") && (IsGrounded()))
+        // {
+        //     playerpos = (Vector2)transform.position;
+        //     reticlepos = (Vector2)reticle.transform.position;
+        //     direction = reticlepos - playerpos;
+        //     rb.AddForce(direction.normalized * speed);
+           
+        // }
         if(Input.GetKeyUp("space") && rb.velocity.y > 0f)
         {
             rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
