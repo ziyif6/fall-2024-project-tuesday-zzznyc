@@ -6,7 +6,8 @@ using UnityEngine.SceneManagement;
 using TMPro;
 
 public class PlayerMovement : MonoBehaviour
-{
+{   
+    bool isGrounded = false;
     [SerializeField] GameObject reticle;
     [SerializeField] GameObject reticlecenter;
     // [SerializeField] TextMeshProUGUI stepsText;
@@ -39,10 +40,10 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] Transform wallCheck;
     [SerializeField] LayerMask wallLayer;
 
-    [SerializeField] float minReticleDistance = 6.0f;  // 初始距离
-    [SerializeField] float maxReticleDistance = 10.0f;  // 最大距离
-    [SerializeField] float reticleSpeed = 0.8f;        // 调整准星的速度
-    private bool increasingDistance = true;          // 标志位：控制距离是否在增加
+    [SerializeField] float minReticleDistance = 1.0f;  
+    [SerializeField] float maxReticleDistance = 10.0f; 
+    [SerializeField] float reticleSpeed = 100.0f;
+    private bool increasingDistance = true;          
     private float currentReticleDistance; 
 
     int currentJumps;
@@ -58,26 +59,28 @@ public class PlayerMovement : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         currentJumps = numJumps;
         currentReticleDistance = minReticleDistance;
-        UpdateStepsText();
     }
 
     // Update is called once per frame
     void Update()
-    {   
-        playerpos = (Vector2)transform.position;
-        reticlepos = (Vector2)reticle.transform.position;
-        direction = reticlepos - playerpos;
-    
+    {   minReticleDistance = 3.5f;  
+        maxReticleDistance = 10.0f; 
+        reticleSpeed = 6.0f;
         if (currentJumps <= 0)
         {
             RestartGame();
         }
-        if (Input.GetKey("space") && IsGrounded())
+
+        playerpos = (Vector2)transform.position;
+        reticlepos = (Vector2)reticle.transform.position;
+        direction = reticlepos - playerpos;
+        
+        if (Input.GetKey("space") && isGrounded)
         {
             if (increasingDistance)
             {   
                 currentReticleDistance += reticleSpeed * Time.deltaTime;
-                if (currentReticleDistance >= maxReticleDistance / 2.2f)
+                if (currentReticleDistance >= maxReticleDistance)
                 {
                     increasingDistance = false;
                 }
@@ -90,19 +93,20 @@ public class PlayerMovement : MonoBehaviour
                     increasingDistance = true;
                 }
             }
-            reticle.transform.position = (Vector2)transform.position + direction.normalized * currentReticleDistance;
+            reticle.transform.position = (Vector2)transform.position + direction.normalized * currentReticleDistance / 5.0f;
         }
 
-        if (Input.GetKeyUp("space"))
+        if (Input.GetKeyUp("space") && isGrounded)
         {
-            // 获取当前玩家和准星的方向
-            playerpos = (Vector2)transform.position;
-            reticlepos = (Vector2)reticle.transform.position;
-            direction = reticlepos - playerpos;
+            Vector2 jumpDirection = (Vector2)(reticle.transform.position - transform.position).normalized;
+
             float jumpForce = currentReticleDistance * speed;
-            rb.AddForce(direction.normalized * jumpForce / 60.0f, ForceMode2D.Impulse);
+
+            rb.AddForce(jumpDirection * jumpForce / 150.0f, ForceMode2D.Impulse);
+
             currentReticleDistance = minReticleDistance;
-             reticle.transform.position = (Vector2)transform.position + direction.normalized * currentReticleDistance;
+            // Vector2 initialDirection = (Vector2)(reticlecenter.transform.position - transform.position).normalized;
+            reticle.transform.position = (Vector2)transform.position + direction.normalized * currentReticleDistance / 5.0f;
             increasingDistance = true;
         }
 
@@ -146,7 +150,6 @@ public class PlayerMovement : MonoBehaviour
         WallSlide();
         WallJump();
         Flip();
-        UpdateStepsText();
     }
 
     void Flip()
@@ -160,10 +163,31 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // 当 Player 与其他物体发生碰撞时触发
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Floor"))
+        {
+            isGrounded = true; // 设置为接触地面
+            Debug.Log("Player 接触到地面");
+        }
+    }
+
+    // 当 Player 离开与某个物体的碰撞时触发
+    void OnCollisionExit2D(Collision2D collision)
+    {
+        // 当玩家不再接触 "Floor" 时，设置为未接触地面
+        if (collision.gameObject.CompareTag("Floor"))
+        {
+            isGrounded = false;
+            Debug.Log("Player 离开了地面");
+        }
+    }
     bool IsGrounded()
     {
-        return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+        return true;
     }
+
     bool IsWalled()
     {
         return Physics2D.OverlapCircle(wallCheck.position, 0.2f, wallLayer);
@@ -289,11 +313,6 @@ public class PlayerMovement : MonoBehaviour
         onWall = false;
     }
     */
-
-    private void UpdateStepsText()
-    {
-        // stepsText.text = "Steps Remaining: " + currentJumps.ToString();
-    }
 
     void RestartGame()
     {
