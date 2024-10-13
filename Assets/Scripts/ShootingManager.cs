@@ -8,7 +8,7 @@ public class ShootingManager : MonoBehaviour
     public Transform firePoint;          
     public float projectileSpeed = 10f;  
     public float fireRate = 1.0f;       
-    public enum Direction { Up, Down, Left, Right }
+    public enum Direction {Up, Down, Left, Right}
     public Direction shootDirection = Direction.Down;  
     private Vector2 directionVector; 
 
