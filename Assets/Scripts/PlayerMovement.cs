@@ -162,6 +162,20 @@ public class PlayerMovement : MonoBehaviour
             reticlepos = (Vector2)reticle.transform.position;
             direction = reticlepos - playerpos;
             rb.AddForce(direction.normalized * speed);
+            // 重置速度为零，防止墙跳前的速度影响跳跃
+            // rb.velocity = Vector2.zero;
+
+            // // 获取玩家的位置和准星的位置，计算跳跃方向
+            // playerpos = (Vector2)transform.position;
+            // reticlepos = (Vector2)reticle.transform.position;
+            // direction = reticlepos - playerpos;
+
+            // // 添加力让角色跳离墙壁
+            // rb.AddForce(direction.normalized * speed, ForceMode2D.Impulse);
+
+            // // 重置墙跳状态以防止再次跳跃
+            // wallSliding = false;
+            
         }
         /*
         if (wallSliding)
