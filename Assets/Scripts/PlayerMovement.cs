@@ -9,7 +9,7 @@ public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] GameObject reticle;
     [SerializeField] GameObject reticlecenter;
-    [SerializeField] TextMeshProUGUI stepsText;
+    // [SerializeField] TextMeshProUGUI stepsText;
     //bool spacepressed = false;
 
     Rigidbody2D rb;
@@ -244,7 +244,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void UpdateStepsText()
     {
-        stepsText.text = "Steps Remaining: " + currentJumps.ToString();
+        // stepsText.text = "Steps Remaining: " + currentJumps.ToString();
     }
 
     void RestartGame()
