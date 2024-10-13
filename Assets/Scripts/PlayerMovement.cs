@@ -6,10 +6,11 @@ using UnityEngine.SceneManagement;
 using TMPro;
 
 public class PlayerMovement : MonoBehaviour
-{
+{   
+    bool isGrounded = false;
     [SerializeField] GameObject reticle;
     [SerializeField] GameObject reticlecenter;
-    [SerializeField] TextMeshProUGUI stepsText;
+    // [SerializeField] TextMeshProUGUI stepsText;
     //bool spacepressed = false;
 
     Rigidbody2D rb;
@@ -30,7 +31,7 @@ public class PlayerMovement : MonoBehaviour
     Vector2 playerpos;
     Vector2 reticlepos;
     Vector2 direction;
-    [SerializeField] float speed = 10f;
+    [SerializeField] float speed = 1f;
     [SerializeField] float regGrav = 1.0f;
     [SerializeField] float wallGrav = 0.5f;
     [SerializeField] int numJumps = 5;
@@ -38,6 +39,12 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] LayerMask groundLayer;
     [SerializeField] Transform wallCheck;
     [SerializeField] LayerMask wallLayer;
+
+    [SerializeField] float minReticleDistance = 1.0f;  
+    [SerializeField] float maxReticleDistance = 10.0f; 
+    [SerializeField] float reticleSpeed = 100.0f;
+    private bool increasingDistance = true;          
+    private float currentReticleDistance; 
 
     int currentJumps;
     
@@ -51,23 +58,66 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         currentJumps = numJumps;
-        UpdateStepsText();
+        currentReticleDistance = minReticleDistance;
     }
 
     // Update is called once per frame
     void Update()
-    {
+    {   minReticleDistance = 3.5f;  
+        maxReticleDistance = 10.0f; 
+        reticleSpeed = 30.0f;
         if (currentJumps <= 0)
         {
             RestartGame();
         }
-        if (Input.GetKeyDown("space") && (IsGrounded()))
+
+        playerpos = (Vector2)transform.position;
+        reticlepos = (Vector2)reticle.transform.position;
+        direction = reticlepos - playerpos;
+        
+        if (Input.GetKey("space") && isGrounded)
         {
-            playerpos = (Vector2)transform.position;
-            reticlepos = (Vector2)reticle.transform.position;
-            direction = reticlepos - playerpos;
-            rb.AddForce(direction.normalized * speed);
+            if (increasingDistance)
+            {   
+                currentReticleDistance += reticleSpeed * Time.deltaTime;
+                if (currentReticleDistance >= maxReticleDistance)
+                {
+                    increasingDistance = false;
+                }
+            }
+            // else
+            // {
+            //     currentReticleDistance -= reticleSpeed * Time.deltaTime;
+            //     if (currentReticleDistance <= minReticleDistance)
+            //     {
+            //         increasingDistance = true;
+            //     }
+            // }
+            reticle.transform.position = (Vector2)transform.position + direction.normalized * currentReticleDistance / 5.0f;
         }
+
+        if (Input.GetKeyUp("space") && isGrounded)
+        {
+            Vector2 jumpDirection = (Vector2)(reticle.transform.position - transform.position).normalized;
+
+            float jumpForce = currentReticleDistance * speed;
+
+            rb.AddForce(jumpDirection * jumpForce / 300.0f, ForceMode2D.Impulse);
+
+            currentReticleDistance = minReticleDistance;
+            // Vector2 initialDirection = (Vector2)(reticlecenter.transform.position - transform.position).normalized;
+            reticle.transform.position = (Vector2)transform.position + direction.normalized * currentReticleDistance / 5.0f;
+            increasingDistance = true;
+        }
+
+        // if (Input.GetKeyDown("space") && (IsGrounded()))
+        // {
+        //     playerpos = (Vector2)transform.position;
+        //     reticlepos = (Vector2)reticle.transform.position;
+        //     direction = reticlepos - playerpos;
+        //     rb.AddForce(direction.normalized * speed);
+           
+        // }
         if(Input.GetKeyUp("space") && rb.velocity.y > 0f)
         {
             rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
@@ -100,7 +150,6 @@ public class PlayerMovement : MonoBehaviour
         WallSlide();
         WallJump();
         Flip();
-        UpdateStepsText();
     }
 
     void Flip()
@@ -114,10 +163,31 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // 当 Player 与其他物体发生碰撞时触发
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Floor"))
+        {
+            isGrounded = true; // 设置为接触地面
+            Debug.Log("Player 接触到地面");
+        }
+    }
+
+    // 当 Player 离开与某个物体的碰撞时触发
+    void OnCollisionExit2D(Collision2D collision)
+    {
+        // 当玩家不再接触 "Floor" 时，设置为未接触地面
+        if (collision.gameObject.CompareTag("Floor"))
+        {
+            isGrounded = false;
+            Debug.Log("Player 离开了地面");
+        }
+    }
     bool IsGrounded()
     {
-        return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+        return true;
     }
+
     bool IsWalled()
     {
         return Physics2D.OverlapCircle(wallCheck.position, 0.2f, wallLayer);
@@ -162,6 +232,8 @@ public class PlayerMovement : MonoBehaviour
             reticlepos = (Vector2)reticle.transform.position;
             direction = reticlepos - playerpos;
             rb.AddForce(direction.normalized * speed);
+            
+            
         }
         /*
         if (wallSliding)
@@ -241,11 +313,6 @@ public class PlayerMovement : MonoBehaviour
         onWall = false;
     }
     */
-
-    private void UpdateStepsText()
-    {
-        stepsText.text = "Steps Remaining: " + currentJumps.ToString();
-    }
 
     void RestartGame()
     {
