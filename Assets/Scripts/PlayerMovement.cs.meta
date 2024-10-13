@@ -3,7 +3,11 @@ guid: b6312425848c71147957fe4d4bcab027
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - reticle: {fileID: 207286423433261259, guid: 5e6a4a0c34705b546a6bfbc63a9f0be3, type: 3}
+  - reticlecenter: {fileID: 5849134505264201385, guid: 6a6e946c52972a641a80877f0cb397ff, type: 3}
+  - groundCheck: {instanceID: 0}
+  - wallCheck: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
