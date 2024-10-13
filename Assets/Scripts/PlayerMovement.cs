@@ -39,6 +39,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] Transform wallCheck;
     [SerializeField] LayerMask wallLayer;
 
+    [SerializeField] float minReticleDistance = 1f; 
+    [SerializeField] float maxReticleDistance = 5f;  
+
     int currentJumps;
     
 
@@ -56,11 +59,27 @@ public class PlayerMovement : MonoBehaviour
 
     // Update is called once per frame
     void Update()
-    {
+    {   
+        playerpos = (Vector2)transform.position;
+        reticlepos = (Vector2)reticle.transform.position;
+        direction = reticlepos - playerpos;
+
         if (currentJumps <= 0)
         {
             RestartGame();
         }
+        if (Input.GetKey("space"))
+        {
+            // 根据按住时间来调整跳跃力度
+            float holdTime = Mathf.Clamp(Time.time, 0, 1.0f);  // 模拟跳跃力度增加
+
+            // 根据跳跃力度调整准星距离（这里可以根据实际的需求进行微调）
+            float distance = Mathf.Lerp(minReticleDistance, maxReticleDistance, holdTime);
+
+            // 计算新的准星位置并更新
+            reticle.transform.position = (Vector2)transform.position + direction.normalized * distance;
+        }
+
         if (Input.GetKeyDown("space") && (IsGrounded()))
         {
             playerpos = (Vector2)transform.position;
@@ -162,19 +181,7 @@ public class PlayerMovement : MonoBehaviour
             reticlepos = (Vector2)reticle.transform.position;
             direction = reticlepos - playerpos;
             rb.AddForce(direction.normalized * speed);
-            // 重置速度为零，防止墙跳前的速度影响跳跃
-            // rb.velocity = Vector2.zero;
-
-            // // 获取玩家的位置和准星的位置，计算跳跃方向
-            // playerpos = (Vector2)transform.position;
-            // reticlepos = (Vector2)reticle.transform.position;
-            // direction = reticlepos - playerpos;
-
-            // // 添加力让角色跳离墙壁
-            // rb.AddForce(direction.normalized * speed, ForceMode2D.Impulse);
-
-            // // 重置墙跳状态以防止再次跳跃
-            // wallSliding = false;
+            
             
         }
         /*
