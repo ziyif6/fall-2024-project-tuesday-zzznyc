@@ -11,10 +11,7 @@ public class Projectile : MonoBehaviour
         {
             Destroy(gameObject); 
         }
-        if (collision.gameObject.CompareTag("Floor"))
-        {
-            Destroy(gameObject);
-        }
+
         if (collision.gameObject.CompareTag("Player"))
         {
             RestartGame();
